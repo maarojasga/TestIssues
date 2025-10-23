@@ -1,0 +1,64 @@
+name: 🤖 Leer Issue y Disparar Job
+
+on:
+  issues:
+    types: [opened] # Se activa solo al CREAR un issue
+
+jobs:
+  parse-issue-and-run-workflow:
+    runs-on: ubuntu-latest
+    
+    # Solo se ejecuta si el issue creado tiene la etiqueta 'databricks-run'
+    # (la que definimos en la plantilla)
+    if: contains(github.event.issue.labels.*.name, 'databricks-run')
+
+    steps:
+      - name: 1. Instalar 'yq' (jq para YAML)
+        run: |
+          # yq es una herramienta para parsear YAML en la terminal
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+
+      - name: 2. Parsear cuerpo del Issue
+        id: parse
+        run: |
+          # Extrae el cuerpo completo del issue
+          BODY="${{ github.event.issue.body }}"
+          
+          # Extrae solo el bloque de código YAML 'run_parameters'
+          YAML_BLOCK=$(echo "$BODY" | yq '.run_parameters' -p yaml -o yaml)
+          
+          echo "Bloque YAML extraído:"
+          echo "$YAML_BLOCK"
+
+          # Extrae cada variable del bloque YAML y la guarda como "output"
+          echo "target_project=$(echo "$YAML_BLOCK" | yq e '.target_project' -N)" >> $GITHUB_OUTPUT
+          echo "databricks_job_id=$(echo "$YAML_BLOCK" | yq e '.databricks_job_id' -N)" >> $GITHUB_OUTPUT
+          echo "execution_type=$(echo "$YAML_BLOCK" | yq e '.execution_type' -N)" >> $GITHUB_OUTPUT
+          echo "periodo_unico=$(echo "$YAML_BLOCK" | yq e '.periodo_unico' -N)" >> $GITHUB_OUTPUT
+          echo "periodo_inicio=$(echo "$YAML_BLOCK" | yq e '.periodo_inicio' -N)" >> $GITHUB_OUTPUT
+          echo "periodo_fin=$(echo "$YAML_BLOCK" | yq e '.periodo_fin' -N)" >> $GITHUB_OUTPUT
+
+      - name: 3. Añadir comentario al Issue (Feedback)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ ¡Issue recibido! Intentando disparar el workflow... \n\n' +
+                    '**Job ID:** ${{ steps.parse.outputs.databricks_job_id }}\n' +
+                    '**Tipo:** ${{ steps.parse.outputs.execution_type }}\n'
+            })
+
+      - name: 4. Llamar al Workflow Reutilizable (El "Motor")
+        # Llama al *otro* workflow en este MISMO repo
+        uses: ./.github/workflows/run-databricks-job.yml
+        with:
+          target_project: ${{ steps.parse.outputs.target_project }}
+          databricks_job_id: ${{ steps.parse.outputs.databricks_job_id }}
+          execution_type: ${{ steps.parse.outputs.execution_type }}
+          periodo_unico: ${{ steps.parse.outputs.periodo_unico }}
+          periodo_inicio: ${{ steps.parse.outputs.periodo_inicio }}
+          periodo_fin: ${{ steps.parse.outputs.periodo_fin }}
