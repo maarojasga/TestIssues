@@ -9,20 +9,17 @@ jobs:
     runs-on: ubuntu-latest
     
     # Solo se ejecuta si el issue creado tiene la etiqueta 'databricks-run'
-    # (la que definimos en la plantilla)
     if: contains(github.event.issue.labels.*.name, 'databricks-run')
 
     steps:
       - name: 1. Instalar 'yq' (jq para YAML)
         run: |
-          # yq es una herramienta para parsear YAML en la terminal
           sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
           sudo chmod +x /usr/bin/yq
 
       - name: 2. Parsear cuerpo del Issue
         id: parse
         run: |
-          # Extrae el cuerpo completo del issue
           BODY="${{ github.event.issue.body }}"
           
           # Extrae solo el bloque de código YAML 'run_parameters'
