@@ -1,0 +1,76 @@
+name: 🚀 Ejecutar Job de Databricks
+description: Llena este formulario para ejecutar un job de Databricks
+labels: ['databricks-run']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Configuración del Job
+        Por favor, completa los siguientes campos para ejecutar tu job de Databricks.
+
+  - type: input
+    id: target_project
+    attributes:
+      label: Nombre del Proyecto
+      description: Nombre del proyecto o repositorio (para referencia)
+      placeholder: "cemm-pilotos"
+    validations:
+      required: true
+
+  - type: input
+    id: databricks_job_id
+    attributes:
+      label: ID del Job de Databricks
+      description: El ID numérico del job en Databricks
+      placeholder: "12345"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: execution_type
+    attributes:
+      label: Tipo de Ejecución
+      description: Selecciona cómo quieres ejecutar el job
+      options:
+        - periodo_unico
+        - rango_periodo
+    validations:
+      required: true
+
+  - type: input
+    id: periodo_unico
+    attributes:
+      label: Periodo Único (YYYYMM)
+      description: Solo si elegiste "periodo_unico". Ejemplo: 202504
+      placeholder: "202504"
+    validations:
+      required: false
+
+  - type: input
+    id: periodo_inicio
+    attributes:
+      label: Periodo de Inicio (YYYYMM)
+      description: Solo si elegiste "rango_periodo". Ejemplo: 202501
+      placeholder: "202501"
+    validations:
+      required: false
+
+  - type: input
+    id: periodo_fin
+    attributes:
+      label: Periodo de Fin (YYYYMM)
+      description: Solo si elegiste "rango_periodo". Ejemplo: 202504
+      placeholder: "202504"
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        ## ❗️ Recordatorios Finales
+        
+        Para que todo esto funcione, asegúrate de tener configurado:
+        
+        1. **Scripts de Validación:** Carpeta `scripts/` con `validate-period-single.sh` y `validate-period-range.sh`
+        2. **Secretos:** `DATABRICKS_HOST` y `DATABRICKS_TOKEN` en Settings > Secrets and variables > Actions
