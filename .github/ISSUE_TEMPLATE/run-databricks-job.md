@@ -1,7 +1,7 @@
 ---
 name: 🚀 Ejecutar Job de Databricks
 about: Llena este formulario para ejecutar un job.
-labels: 'databricks-run' # <-- Etiqueta CLAVE para que el workflow lo detecte
+labels: 'databricks-run'
 ---
 
 **Por favor, llena los parámetros del job dentro del bloque YAML de abajo.**
@@ -15,6 +15,7 @@ No borres las comillas.
 - `periodo_fin`: (Opcional) `YYYYMM`. Déjalo `""` si no aplica.
 
 ---
+
 ```yaml
 run_parameters:
   target_project: "cemm-pilotos"
@@ -23,11 +24,13 @@ run_parameters:
   periodo_unico: "202504"
   periodo_inicio: ""
   periodo_fin: ""
+```
+
 ---
 
 ## ❗️ Recordatorios Finales
 
 Para que todo esto funcione, solo asegúrate de dos cosas en tu repositorio `databricks-runner`:
 
-1.  **Scripts de Validación:** Crea una carpeta llamada `scripts` en la raíz de tu repositorio y pon allí tus archivos `validate-period-single.sh` y `validate-period-range.sh`.
-2.  **Secretos:** Ve a **Settings > Secrets and variables > Actions** y crea los secretos `DATABRICKS_HOST` y `DATABRICKS_TOKEN`.
+1. **Scripts de Validación:** Crea una carpeta llamada `scripts` en la raíz de tu repositorio y pon allí tus archivos `validate-period-single.sh` y `validate-period-range.sh`.
+2. **Secretos:** Ve a **Settings > Secrets and variables > Actions** y crea los secretos `DATABRICKS_HOST` y `DATABRICKS_TOKEN`.
