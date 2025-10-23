@@ -1,0 +1,70 @@
+name: 🚀 Ejecutar Job de Databricks
+description: Llena este formulario para ejecutar un job de Databricks
+title: "[Job Request] "
+labels: ["databricks-run"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Configuración del Job
+        Por favor, completa los siguientes campos para ejecutar tu job de Databricks.
+
+  - type: input
+    id: target_project
+    attributes:
+      label: Nombre del Proyecto
+      description: Nombre del proyecto o repositorio (para referencia)
+      placeholder: cemm-pilotos
+    validations:
+      required: true
+
+  - type: input
+    id: databricks_job_id
+    attributes:
+      label: ID del Job de Databricks
+      description: El ID numérico del job en Databricks
+      placeholder: "12345"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: execution_type
+    attributes:
+      label: Tipo de Ejecución
+      description: Selecciona cómo quieres ejecutar el job
+      options:
+        - periodo_unico
+        - rango_periodo
+      default: 0
+    validations:
+      required: true
+
+  - type: input
+    id: periodo_unico
+    attributes:
+      label: Periodo Único
+      description: Solo si elegiste "periodo_unico". Formato YYYYMM (ejemplo 202504)
+      placeholder: "202504"
+
+  - type: input
+    id: periodo_inicio
+    attributes:
+      label: Periodo de Inicio
+      description: Solo si elegiste "rango_periodo". Formato YYYYMM (ejemplo 202501)
+      placeholder: "202501"
+
+  - type: input
+    id: periodo_fin
+    attributes:
+      label: Periodo de Fin
+      description: Solo si elegiste "rango_periodo". Formato YYYYMM (ejemplo 202504)
+      placeholder: "202504"
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        ## ❗️ Recordatorios
+        
+        - Asegúrate de tener los scripts de validación en `scripts/`
+        - Verifica que los secretos `DATABRICKS_HOST` y `DATABRICKS_TOKEN` estén configurados

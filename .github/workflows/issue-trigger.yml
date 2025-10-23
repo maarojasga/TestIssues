@@ -1,0 +1,82 @@
+name: 🤖 Leer Issue y Disparar Job
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  parse-issue-and-run-workflow:
+    runs-on: ubuntu-latest
+    
+    # Solo se ejecuta si el issue tiene la etiqueta 'databricks-run'
+    if: contains(github.event.issue.labels.*.name, 'databricks-run')
+
+    steps:
+      - name: 1. Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: 2. Parsear campos del formulario
+        id: parse
+        run: |
+          BODY="${{ github.event.issue.body }}"
+          
+          # Función para extraer valores del formulario GitHub
+          extract_field() {
+            echo "$BODY" | grep -A 1 "### $1" | tail -1 | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//'
+          }
+          
+          # Extraer cada campo
+          TARGET_PROJECT=$(extract_field "Nombre del Proyecto")
+          JOB_ID=$(extract_field "ID del Job de Databricks")
+          EXEC_TYPE=$(extract_field "Tipo de Ejecución")
+          PERIODO_UNICO=$(extract_field "Periodo Único")
+          PERIODO_INICIO=$(extract_field "Periodo de Inicio")
+          PERIODO_FIN=$(extract_field "Periodo de Fin")
+          
+          # Valores por defecto si están vacíos
+          PERIODO_UNICO=${PERIODO_UNICO:-""}
+          PERIODO_INICIO=${PERIODO_INICIO:-""}
+          PERIODO_FIN=${PERIODO_FIN:-""}
+          
+          # Guardar como outputs
+          echo "target_project=$TARGET_PROJECT" >> $GITHUB_OUTPUT
+          echo "databricks_job_id=$JOB_ID" >> $GITHUB_OUTPUT
+          echo "execution_type=$EXEC_TYPE" >> $GITHUB_OUTPUT
+          echo "periodo_unico=$PERIODO_UNICO" >> $GITHUB_OUTPUT
+          echo "periodo_inicio=$PERIODO_INICIO" >> $GITHUB_OUTPUT
+          echo "periodo_fin=$PERIODO_FIN" >> $GITHUB_OUTPUT
+          
+          # Log para debug
+          echo "=== Valores Parseados ==="
+          echo "Proyecto: $TARGET_PROJECT"
+          echo "Job ID: $JOB_ID"
+          echo "Tipo: $EXEC_TYPE"
+          echo "Periodo Único: $PERIODO_UNICO"
+          echo "Inicio: $PERIODO_INICIO"
+          echo "Fin: $PERIODO_FIN"
+
+      - name: 3. Añadir comentario al Issue (Feedback)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ ¡Issue recibido! Procesando solicitud de ejecución... \n\n' +
+                    '**📁 Proyecto:** `${{ steps.parse.outputs.target_project }}`\n' +
+                    '**🆔 Job ID:** `${{ steps.parse.outputs.databricks_job_id }}`\n' +
+                    '**⚙️ Tipo:** `${{ steps.parse.outputs.execution_type }}`\n' +
+                    '**📅 Periodo:** `${{ steps.parse.outputs.periodo_unico || steps.parse.outputs.periodo_inicio }} ${{ steps.parse.outputs.periodo_fin && '- ' + steps.parse.outputs.periodo_fin || '' }}`\n\n' +
+                    '⏳ El workflow se está ejecutando...'
+            })
+
+      - name: 4. Llamar al Workflow Reutilizable (El "Motor")
+        uses: ./.github/workflows/run-databricks-job.yml
+        with:
+          target_project: ${{ steps.parse.outputs.target_project }}
+          databricks_job_id: ${{ steps.parse.outputs.databricks_job_id }}
+          execution_type: ${{ steps.parse.outputs.execution_type }}
+          periodo_unico: ${{ steps.parse.outputs.periodo_unico }}
+          periodo_inicio: ${{ steps.parse.outputs.periodo_inicio }}
+          periodo_fin: ${{ steps.parse.outputs.periodo_fin }}
